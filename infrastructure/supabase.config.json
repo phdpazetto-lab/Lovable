@@ -1,0 +1,21 @@
+{
+  "$schema": "https://supabase.com/docs/supabase.config.json",
+  "projectId": "starmkt-os",
+  "functions": {
+    "sync-to-sheets": {
+      "verifyJWT": false
+    },
+    "webhooks-recebimentos": {
+      "verifyJWT": false
+    },
+    "webhooks-pagamentos": {
+      "verifyJWT": false
+    },
+    "webhooks-reembolsos": {
+      "verifyJWT": false
+    },
+    "webhooks-patrimonio": {
+      "verifyJWT": false
+    }
+  }
+}
