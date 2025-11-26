@@ -75,6 +75,7 @@ export function DespesasPage() {
                 <th className="px-4 py-3 text-left font-semibold text-gray-700">Título</th>
                 <th className="px-4 py-3 text-left font-semibold text-gray-700">Categoria</th>
                 <th className="px-4 py-3 text-left font-semibold text-gray-700">Data</th>
+                <th className="px-4 py-3 text-left font-semibold text-gray-700">Comprovante</th>
                 <th className="px-4 py-3 text-right font-semibold text-gray-700">Valor</th>
                 <th className="px-4 py-3 text-right font-semibold text-gray-700">Ações</th>
               </tr>
@@ -82,7 +83,7 @@ export function DespesasPage() {
             <tbody className="divide-y divide-gray-100 bg-white">
               {loading && (
                 <tr>
-                  <td colSpan={5} className="px-4 py-6 text-center text-gray-500">
+                  <td colSpan={6} className="px-4 py-6 text-center text-gray-500">
                     Carregando despesas...
                   </td>
                 </tr>
@@ -90,7 +91,7 @@ export function DespesasPage() {
 
               {!loading && despesas.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-4 py-6 text-center text-gray-500">
+                  <td colSpan={6} className="px-4 py-6 text-center text-gray-500">
                     Nenhuma despesa encontrada.
                   </td>
                 </tr>
@@ -102,6 +103,20 @@ export function DespesasPage() {
                     <td className="px-4 py-3">{despesa.titulo}</td>
                     <td className="px-4 py-3">{despesa.categoria || '-'}</td>
                     <td className="px-4 py-3">{formatDate(despesa.data)}</td>
+                    <td className="px-4 py-3">
+                      {despesa.comprovante_url ? (
+                        <a
+                          className="text-primary underline"
+                          href={despesa.comprovante_url}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          Ver
+                        </a>
+                      ) : (
+                        <span className="text-gray-400">-</span>
+                      )}
+                    </td>
                     <td className="px-4 py-3 text-right">{formatCurrency(despesa.valor)}</td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex justify-end gap-2">

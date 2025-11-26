@@ -1,27 +1,22 @@
 import { supabase } from '../lib/supabaseClient';
-import { uploadFileToBucket } from './storageService';
 
-const DESPESAS_BUCKET = 'comprovantes-despesas';
-
-export type Despesa = {
+export type MaterialSolicitacao = {
   id: number;
   user_id: string;
   titulo: string;
-  descricao: string | null;
-  valor: number;
-  categoria: string | null;
+  materiais_necessarios: string;
+  motivo: string;
   data: string | null;
-  comprovante_url?: string | null;
+  urgencia: string;
   created_at: string;
 };
 
-export type DespesaInput = {
+export type MaterialSolicitacaoInput = {
   titulo: string;
-  descricao?: string;
-  valor: number;
-  categoria?: string;
+  materiais_necessarios: string;
+  motivo: string;
   data?: string;
-  comprovante_url?: string | null;
+  urgencia: string;
 };
 
 async function getCurrentUserId() {
@@ -31,56 +26,55 @@ async function getCurrentUserId() {
   return data.user.id;
 }
 
-function normalizeDespesas(data: any[] = []): Despesa[] {
+function normalize(data: any[] = []): MaterialSolicitacao[] {
   return data.map((item) => ({
     ...item,
-    valor: Number(item.valor ?? 0),
-    comprovante_url: item.comprovante_url ?? null,
+    urgencia: item.urgencia ?? 'normal',
   }));
 }
 
-export async function getAllDespesas() {
+export async function getAllSolicitacoes() {
   const userId = await getCurrentUserId();
   const { data, error } = await supabase
-    .from('despesas')
+    .from('materiais_solicitacoes')
     .select('*')
     .eq('user_id', userId)
     .order('data', { ascending: false })
     .order('created_at', { ascending: false });
 
   if (error) throw new Error(error.message);
-  return normalizeDespesas(data || []);
+  return normalize(data || []);
 }
 
-export async function getDespesaById(id: number) {
+export async function getSolicitacaoById(id: number) {
   const userId = await getCurrentUserId();
   const { data, error } = await supabase
-    .from('despesas')
+    .from('materiais_solicitacoes')
     .select('*')
     .eq('id', id)
     .eq('user_id', userId)
     .single();
 
   if (error) throw new Error(error.message);
-  return normalizeDespesas([data || {}])[0];
+  return normalize([data || {}])[0];
 }
 
-export async function createDespesa(payload: DespesaInput) {
+export async function createSolicitacao(payload: MaterialSolicitacaoInput) {
   const userId = await getCurrentUserId();
   const { data, error } = await supabase
-    .from('despesas')
+    .from('materiais_solicitacoes')
     .insert({ ...payload, user_id: userId })
     .select()
     .single();
 
   if (error) throw new Error(error.message);
-  return normalizeDespesas([data || {}])[0];
+  return normalize([data || {}])[0];
 }
 
-export async function updateDespesa(id: number, payload: DespesaInput) {
+export async function updateSolicitacao(id: number, payload: MaterialSolicitacaoInput) {
   const userId = await getCurrentUserId();
   const { data, error } = await supabase
-    .from('despesas')
+    .from('materiais_solicitacoes')
     .update({ ...payload, user_id: userId })
     .eq('id', id)
     .eq('user_id', userId)
@@ -88,16 +82,12 @@ export async function updateDespesa(id: number, payload: DespesaInput) {
     .single();
 
   if (error) throw new Error(error.message);
-  return normalizeDespesas([data || {}])[0];
+  return normalize([data || {}])[0];
 }
 
-export async function removeDespesa(id: number) {
+export async function removeSolicitacao(id: number) {
   const userId = await getCurrentUserId();
-  const { error } = await supabase.from('despesas').delete().eq('id', id).eq('user_id', userId);
+  const { error } = await supabase.from('materiais_solicitacoes').delete().eq('id', id).eq('user_id', userId);
   if (error) throw new Error(error.message);
   return true;
-}
-
-export async function uploadDespesaComprovante(file: File) {
-  return uploadFileToBucket(DESPESAS_BUCKET, file, { prefix: 'despesas' });
 }

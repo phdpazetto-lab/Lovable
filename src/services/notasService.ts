@@ -1,4 +1,7 @@
 import { supabase } from '../lib/supabaseClient';
+import { uploadFileToBucket } from './storageService';
+
+const NOTAS_BUCKET = 'notas-fiscais';
 
 export type Nota = {
   id: number;
@@ -9,6 +12,8 @@ export type Nota = {
   valor: number;
   data_emissao: string | null;
   descricao: string | null;
+  competencia: string | null;
+  nf_url?: string | null;
   created_at: string;
 };
 
@@ -19,6 +24,8 @@ export type NotaInput = {
   valor: number;
   data_emissao?: string;
   descricao?: string;
+  competencia?: string;
+  nf_url?: string | null;
 };
 
 async function getCurrentUserId() {
@@ -32,6 +39,8 @@ function normalizeNotas(data: any[] = []): Nota[] {
   return data.map((item) => ({
     ...item,
     valor: Number(item.valor ?? 0),
+    competencia: item.competencia ?? null,
+    nf_url: item.nf_url ?? null,
   }));
 }
 
@@ -92,4 +101,9 @@ export async function removeNota(id: number) {
   const { error } = await supabase.from('notas').delete().eq('id', id).eq('user_id', userId);
   if (error) throw new Error(error.message);
   return true;
+}
+
+export async function uploadNotaFiscal(file: File, competenceKey?: string) {
+  const prefix = competenceKey ? `notas/${competenceKey}` : 'notas';
+  return uploadFileToBucket(NOTAS_BUCKET, file, { prefix });
 }

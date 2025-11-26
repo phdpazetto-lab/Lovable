@@ -1,27 +1,23 @@
 import { supabase } from '../lib/supabaseClient';
-import { uploadFileToBucket } from './storageService';
+import { mapFilesToUrls } from './storageService';
 
-const DESPESAS_BUCKET = 'comprovantes-despesas';
-
-export type Despesa = {
+export type MaterialOcorrencia = {
   id: number;
   user_id: string;
-  titulo: string;
-  descricao: string | null;
-  valor: number;
-  categoria: string | null;
+  equipamento: string;
+  patrimonio: string;
   data: string | null;
-  comprovante_url?: string | null;
+  descricao: string | null;
+  anexos: string[];
   created_at: string;
 };
 
-export type DespesaInput = {
-  titulo: string;
-  descricao?: string;
-  valor: number;
-  categoria?: string;
+export type MaterialOcorrenciaInput = {
+  equipamento: string;
+  patrimonio: string;
   data?: string;
-  comprovante_url?: string | null;
+  descricao?: string;
+  anexos?: string[];
 };
 
 async function getCurrentUserId() {
@@ -31,56 +27,62 @@ async function getCurrentUserId() {
   return data.user.id;
 }
 
-function normalizeDespesas(data: any[] = []): Despesa[] {
+const BUCKET = 'materiais-ocorrencias';
+
+export async function uploadOcorrenciaFiles(files: File[]) {
+  if (!files.length) return [] as string[];
+  return mapFilesToUrls(files, BUCKET, 'ocorrencias');
+}
+
+function normalize(data: any[] = []): MaterialOcorrencia[] {
   return data.map((item) => ({
     ...item,
-    valor: Number(item.valor ?? 0),
-    comprovante_url: item.comprovante_url ?? null,
+    anexos: item.anexos ?? [],
   }));
 }
 
-export async function getAllDespesas() {
+export async function getAllOcorrencias() {
   const userId = await getCurrentUserId();
   const { data, error } = await supabase
-    .from('despesas')
+    .from('materiais_ocorrencias')
     .select('*')
     .eq('user_id', userId)
     .order('data', { ascending: false })
     .order('created_at', { ascending: false });
 
   if (error) throw new Error(error.message);
-  return normalizeDespesas(data || []);
+  return normalize(data || []);
 }
 
-export async function getDespesaById(id: number) {
+export async function getOcorrenciaById(id: number) {
   const userId = await getCurrentUserId();
   const { data, error } = await supabase
-    .from('despesas')
+    .from('materiais_ocorrencias')
     .select('*')
     .eq('id', id)
     .eq('user_id', userId)
     .single();
 
   if (error) throw new Error(error.message);
-  return normalizeDespesas([data || {}])[0];
+  return normalize([data || {}])[0];
 }
 
-export async function createDespesa(payload: DespesaInput) {
+export async function createOcorrencia(payload: MaterialOcorrenciaInput) {
   const userId = await getCurrentUserId();
   const { data, error } = await supabase
-    .from('despesas')
+    .from('materiais_ocorrencias')
     .insert({ ...payload, user_id: userId })
     .select()
     .single();
 
   if (error) throw new Error(error.message);
-  return normalizeDespesas([data || {}])[0];
+  return normalize([data || {}])[0];
 }
 
-export async function updateDespesa(id: number, payload: DespesaInput) {
+export async function updateOcorrencia(id: number, payload: MaterialOcorrenciaInput) {
   const userId = await getCurrentUserId();
   const { data, error } = await supabase
-    .from('despesas')
+    .from('materiais_ocorrencias')
     .update({ ...payload, user_id: userId })
     .eq('id', id)
     .eq('user_id', userId)
@@ -88,16 +90,12 @@ export async function updateDespesa(id: number, payload: DespesaInput) {
     .single();
 
   if (error) throw new Error(error.message);
-  return normalizeDespesas([data || {}])[0];
+  return normalize([data || {}])[0];
 }
 
-export async function removeDespesa(id: number) {
+export async function removeOcorrencia(id: number) {
   const userId = await getCurrentUserId();
-  const { error } = await supabase.from('despesas').delete().eq('id', id).eq('user_id', userId);
+  const { error } = await supabase.from('materiais_ocorrencias').delete().eq('id', id).eq('user_id', userId);
   if (error) throw new Error(error.message);
   return true;
-}
-
-export async function uploadDespesaComprovante(file: File) {
-  return uploadFileToBucket(DESPESAS_BUCKET, file, { prefix: 'despesas' });
 }

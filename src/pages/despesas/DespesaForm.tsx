@@ -3,7 +3,12 @@ import { useForm } from 'react-hook-form';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Toast } from '../../components/Toast';
 import { useToast } from '../../hooks/useToast';
-import { createDespesa, getDespesaById, updateDespesa } from '../../services/despesasService';
+import {
+  createDespesa,
+  getDespesaById,
+  updateDespesa,
+  uploadDespesaComprovante,
+} from '../../services/despesasService';
 
 interface FormValues {
   titulo: string;
@@ -11,9 +16,11 @@ interface FormValues {
   categoria: string;
   data: string;
   descricao: string;
+  comprovante?: FileList;
 }
 
 const categories = ['Transporte', 'Alimentação', 'Hospedagem', 'Serviços', 'Outros'];
+const MAX_FILE_SIZE_MB = 10;
 
 export function DespesaForm() {
   const navigate = useNavigate();
@@ -21,12 +28,15 @@ export function DespesaForm() {
   const isEditing = useMemo(() => Boolean(id), [id]);
   const { toast, showToast, clearToast } = useToast();
   const [loading, setLoading] = useState(isEditing);
+  const [comprovanteUrl, setComprovanteUrl] = useState<string | null>(null);
+  const [removeFile, setRemoveFile] = useState(false);
 
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
     reset,
+    watch,
   } = useForm<FormValues>({
     defaultValues: {
       titulo: '',
@@ -49,6 +59,7 @@ export function DespesaForm() {
             data: despesa.data || '',
             descricao: despesa.descricao || '',
           });
+          setComprovanteUrl(despesa.comprovante_url || null);
         } catch (error: any) {
           showToast({ message: error?.message || 'Despesa não encontrada.', type: 'error' });
           navigate('/despesas');
@@ -60,14 +71,33 @@ export function DespesaForm() {
     }
   }, [id, isEditing, navigate, reset, showToast]);
 
+  const fileList = watch('comprovante');
+
   const onSubmit = async (values: FormValues) => {
     try {
+      let comprovantePublicUrl = comprovanteUrl;
+
+      const file = values.comprovante?.item(0);
+      if (file) {
+        if (file.size / 1024 / 1024 > MAX_FILE_SIZE_MB) {
+          showToast({ message: `Arquivo deve ter no máximo ${MAX_FILE_SIZE_MB}MB.`, type: 'error' });
+          return;
+        }
+        const { publicUrl } = await uploadDespesaComprovante(file);
+        comprovantePublicUrl = publicUrl;
+      }
+
+      if (removeFile) {
+        comprovantePublicUrl = null;
+      }
+
       const payload = {
         titulo: values.titulo,
         valor: Number(values.valor),
         categoria: values.categoria || undefined,
         data: values.data || undefined,
         descricao: values.descricao || '',
+        comprovante_url: comprovantePublicUrl,
       };
 
       if (isEditing && id) {
@@ -162,6 +192,34 @@ export function DespesaForm() {
                   placeholder="Detalhes adicionais"
                 />
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">Comprovante (imagem ou PDF)</label>
+              <input
+                type="file"
+                accept="image/*,application/pdf"
+                {...register('comprovante')}
+                className="block w-full text-sm"
+              />
+              {fileList?.item(0) && (
+                <p className="text-xs text-gray-500">Arquivo selecionado: {fileList.item(0)?.name}</p>
+              )}
+              {comprovanteUrl && !fileList?.length && !removeFile && (
+                <div className="flex items-center justify-between rounded-md bg-gray-50 px-3 py-2 text-xs text-gray-700">
+                  <a href={comprovanteUrl} target="_blank" rel="noreferrer" className="text-primary underline">
+                    Ver comprovante atual
+                  </a>
+                  <button
+                    type="button"
+                    className="text-red-600 hover:underline"
+                    onClick={() => setRemoveFile(true)}
+                  >
+                    Remover
+                  </button>
+                </div>
+              )}
+              {removeFile && <p className="text-xs text-amber-600">O comprovante será removido ao salvar.</p>}
             </div>
 
             <div className="flex justify-end gap-3">

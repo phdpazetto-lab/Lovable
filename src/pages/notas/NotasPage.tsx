@@ -70,9 +70,9 @@ export function NotasPage() {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-4 py-3 text-left font-semibold text-gray-700">Número</th>
-                <th className="px-4 py-3 text-left font-semibold text-gray-700">Emissor</th>
-                <th className="px-4 py-3 text-left font-semibold text-gray-700">Tomador</th>
-                <th className="px-4 py-3 text-left font-semibold text-gray-700">Data</th>
+                <th className="px-4 py-3 text-left font-semibold text-gray-700">Competência</th>
+                <th className="px-4 py-3 text-left font-semibold text-gray-700">Data de emissão</th>
+                <th className="px-4 py-3 text-left font-semibold text-gray-700">NF</th>
                 <th className="px-4 py-3 text-right font-semibold text-gray-700">Valor</th>
                 <th className="px-4 py-3 text-right font-semibold text-gray-700">Ações</th>
               </tr>
@@ -98,9 +98,17 @@ export function NotasPage() {
                 notas.map((nota) => (
                   <tr key={nota.id}>
                     <td className="px-4 py-3">{nota.numero}</td>
-                    <td className="px-4 py-3">{nota.emissor}</td>
-                    <td className="px-4 py-3">{nota.tomador}</td>
+                    <td className="px-4 py-3">{nota.competencia || '-'}</td>
                     <td className="px-4 py-3">{formatDate(nota.data_emissao)}</td>
+                    <td className="px-4 py-3">
+                      {nota.nf_url ? (
+                        <a className="text-primary underline" href={nota.nf_url} target="_blank" rel="noreferrer">
+                          Ver
+                        </a>
+                      ) : (
+                        <span className="text-gray-400">-</span>
+                      )}
+                    </td>
                     <td className="px-4 py-3 text-right">{formatCurrency(nota.valor)}</td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex justify-end gap-2">
