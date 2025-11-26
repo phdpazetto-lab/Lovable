@@ -7,8 +7,6 @@ export type Nota = {
   id: number;
   user_id: string;
   numero: string;
-  emissor: string;
-  tomador: string;
   valor: number;
   data_emissao: string | null;
   descricao: string | null;
@@ -19,8 +17,6 @@ export type Nota = {
 
 export type NotaInput = {
   numero: string;
-  emissor: string;
-  tomador: string;
   valor: number;
   data_emissao?: string;
   descricao?: string;

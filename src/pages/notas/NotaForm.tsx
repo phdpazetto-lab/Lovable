@@ -7,8 +7,6 @@ import { createNota, getNotaById, updateNota, uploadNotaFiscal } from '../../ser
 
 interface FormValues {
   numero: string;
-  emissor?: string;
-  tomador?: string;
   valor: number | string;
   data_emissao: string;
   competencia: string;
@@ -36,8 +34,6 @@ export function NotaForm() {
   } = useForm<FormValues>({
     defaultValues: {
       numero: '',
-      emissor: '',
-      tomador: '',
       valor: '',
       data_emissao: '',
       competencia: '',
@@ -52,8 +48,6 @@ export function NotaForm() {
           const nota = await getNotaById(Number(id));
           reset({
             numero: nota.numero || '',
-            emissor: nota.emissor || '',
-            tomador: nota.tomador || '',
             valor: nota.valor || '',
             data_emissao: nota.data_emissao || '',
             competencia: nota.competencia || '',
@@ -93,8 +87,6 @@ export function NotaForm() {
 
       const payload = {
         numero: values.numero,
-        emissor: values.emissor || '',
-        tomador: values.tomador || '',
         valor: Number(values.valor),
         data_emissao: values.data_emissao || undefined,
         competencia: values.competencia || undefined,
@@ -180,32 +172,15 @@ export function NotaForm() {
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">
-              <div>
-                <label className="text-sm font-medium text-gray-700">Emissor</label>
-                <input
+              <div className="md:col-span-2">
+                <label className="text-sm font-medium text-gray-700">Descrição</label>
+                <textarea
+                  rows={3}
                   className="mt-1 w-full rounded-md border border-gray-200 px-3 py-2 text-sm focus:border-primary focus:outline-none"
-                  {...register('emissor')}
-                  placeholder="Quem emitiu"
+                  {...register('descricao')}
+                  placeholder="Descreva o serviço ou produto"
                 />
               </div>
-              <div>
-                <label className="text-sm font-medium text-gray-700">Tomador</label>
-                <input
-                  className="mt-1 w-full rounded-md border border-gray-200 px-3 py-2 text-sm focus:border-primary focus:outline-none"
-                  {...register('tomador')}
-                  placeholder="Quem recebeu"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="text-sm font-medium text-gray-700">Descrição</label>
-              <textarea
-                rows={3}
-                className="mt-1 w-full rounded-md border border-gray-200 px-3 py-2 text-sm focus:border-primary focus:outline-none"
-                {...register('descricao')}
-                placeholder="Descreva o serviço ou produto"
-              />
             </div>
 
             <div className="space-y-2">
