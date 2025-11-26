@@ -28,10 +28,13 @@ create table if not exists expenses (
   description text not null,
   amount numeric(12,2) not null check (amount > 0),
   cost_center text,
+  comprovante_url text,
   status text check (status in ('PENDENTE','APROVADO','REJEITADO','PAGO')) default 'PENDENTE',
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
+
+alter table expenses add column if not exists comprovante_url text;
 
 create table if not exists expense_receipts (
   id bigserial primary key,
@@ -126,6 +129,7 @@ create table if not exists notifications (
 -- Storage buckets
 insert into storage.buckets (id, name, public) values
   ('despesas-comprovantes','despesas-comprovantes', false),
+  ('comprovantes-despesas','comprovantes-despesas', false),
   ('notas-fiscais','notas-fiscais', false),
   ('materiais-termos','materiais-termos', false),
   ('materiais-anexos','materiais-anexos', false),
@@ -180,13 +184,22 @@ create policy "Users view notifications" on notifications for select using (user
 
 -- Storage policies
 create policy "Admin storage full" on storage.objects for all using (auth.jwt() ->> 'role' = 'admin');
-create policy "User upload receipts" on storage.objects for insert using (
-  bucket_id in ('despesas-comprovantes','notas-fiscais','materiais-termos','materiais-anexos','relatorios-reembolso')
+create policy "User upload receipts" on storage.objects for insert with check (
+  bucket_id in ('comprovantes-despesas','despesas-comprovantes','notas-fiscais','materiais-termos','materiais-anexos','relatorios-reembolso')
+  and coalesce((storage.foldername(name))[1], '') = auth.uid()::text
 );
+
+create policy "User manage own storage objects" on storage.objects for update using (
+  coalesce((storage.foldername(name))[1], '') = auth.uid()::text
+) with check (
+  coalesce((storage.foldername(name))[1], '') = auth.uid()::text
+);
+
+create policy "User delete own storage objects" on storage.objects for delete using (
+  coalesce((storage.foldername(name))[1], '') = auth.uid()::text
+);
+
 create policy "User own file access" on storage.objects for select using (
-  (bucket_id = 'despesas-comprovantes' and (storage.foldername(name))[1] = auth.uid()) or
-  (bucket_id = 'notas-fiscais' and (storage.foldername(name))[1] = auth.uid()) or
-  (bucket_id = 'materiais-termos' and (storage.foldername(name))[1] = auth.uid()) or
-  (bucket_id = 'materiais-anexos' and (storage.foldername(name))[1] = auth.uid()) or
-  (bucket_id = 'relatorios-reembolso' and (storage.foldername(name))[1] = auth.uid())
+  bucket_id in ('comprovantes-despesas','despesas-comprovantes','notas-fiscais','materiais-termos','materiais-anexos','relatorios-reembolso')
+  and coalesce((storage.foldername(name))[1], '') = auth.uid()::text
 );
