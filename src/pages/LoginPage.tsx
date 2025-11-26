@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
+import { useNavigate } from 'react-router-dom';
 
 export function LoginPage() {
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -11,8 +13,21 @@ export function LoginPage() {
     e.preventDefault();
     setLoading(true);
     setError(null);
-    const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
-    if (signInError) setError(signInError.message);
+
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    });
+
+    if (signInError) {
+      setError(signInError.message);
+      setLoading(false);
+      return;
+    }
+
+    // 🔥 REDIRECIONAMENTO APÓS LOGIN
+    navigate('/despesas', { replace: true });
+
     setLoading(false);
   };
 
@@ -23,6 +38,7 @@ export function LoginPage() {
           <h1 className="text-2xl font-semibold text-secondary">Acessar plataforma</h1>
           <p className="text-sm text-gray-500">Autentique-se com suas credenciais corporativas.</p>
         </div>
+
         <div className="space-y-4">
           <div>
             <label className="text-sm font-medium text-gray-700">E-mail</label>
@@ -34,6 +50,7 @@ export function LoginPage() {
               required
             />
           </div>
+
           <div>
             <label className="text-sm font-medium text-gray-700">Senha</label>
             <input
@@ -45,7 +62,13 @@ export function LoginPage() {
             />
           </div>
         </div>
-        {error && <div className="rounded-md bg-red-50 p-3 text-sm text-red-700">{error}</div>}
+
+        {error && (
+          <div className="rounded-md bg-red-50 p-3 text-sm text-red-700">
+            {error}
+          </div>
+        )}
+
         <button type="submit" className="button button-primary w-full" disabled={loading}>
           {loading ? 'Entrando...' : 'Entrar'}
         </button>
